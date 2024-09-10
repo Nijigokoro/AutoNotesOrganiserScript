@@ -8,6 +8,7 @@ ICAL_FILE_URL="" # Lien pour télécharger le fichier .ical
 MATIERES_FOLDER="Matieres"
 TEMPLATE_FOLDER="Template"
 DATES_FOLDER="Dates"
+CHECK_UPDATES=1
 
 printHeader() {
   clear
@@ -29,8 +30,26 @@ Yb,_,dP       `8b,    88        Y8, `Y8b,,__,,d8P`  "888,,____,dP
 }
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+CURRENT_VER="1.2"
 
 printHeader
+
+if [[ "$CHECK_UPDATES" ]]; then
+  LAST_VER=$(curl -s "https://api.github.com/repos/nijigokoro/AutoNotesOrganiserScript/releases/latest" | grep "tag_name" | cut -d'"' -f 4)
+  if [[ "$CURRENT_VER" != "$LAST_VER" ]]; then
+    READ=""
+    echo "Une mise à jour est disponible. Voulez vous la télécharger?"
+    printf "[y/N] > "
+    read -r -N 1 READ
+    if [[ "$READ" == "y" ]]; then
+      echo
+      echo "Téléchargement..."
+      wget "https://github.com/Nijigokoro/AutoNotesOrganiserScript/releases/download/${LAST_VER}/ANOS.sh" -O "ANOS.sh"
+      echo "Téléchargement terminé. Veuillez relancer le programme"
+      exit
+    fi
+  fi
+fi
 
 if [[ ! -d "$MATIERES_FOLDER" || ! -d "$DATES_FOLDER" || ! -d "$TEMPLATE_FOLDER" ]]; then
   echo "Des répertoires sont manquant. Création.."
