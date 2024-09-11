@@ -34,7 +34,7 @@ CURRENT_VER="1.2"
 
 printHeader
 
-if [[ "$CHECK_UPDATES" ]]; then
+if [[ "$CHECK_UPDATES" == 1 ]]; then
   LAST_VER=$(curl -s "https://api.github.com/repos/nijigokoro/AutoNotesOrganiserScript/releases/latest" | grep "tag_name" | cut -d'"' -f 4)
   if [[ "$CURRENT_VER" != "$LAST_VER" ]]; then
     READ=""
