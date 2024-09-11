@@ -2,13 +2,7 @@
 
 # ANOS - Automatic Notes Organiser Script
 # Authors: Nijigokoro - nijigokoro@gmail.com
-
-# Configuration :
-ICAL_FILE_URL="" # Lien pour télécharger le fichier .ical
-MATIERES_FOLDER="Matieres"
-TEMPLATE_FOLDER="Template"
-DATES_FOLDER="Dates"
-CHECK_UPDATES=1
+#
 
 printHeader() {
   clear
@@ -22,7 +16,7 @@ printHeader() {
  __   ,8"     88      88        88 Y8,          ,8P     dP`   `Yb
 dP"  ,8P      Y8      88        88 `Y8,        ,8P` _ ,dP`     I8
 Yb,_,dP       `8b,    88        Y8, `Y8b,,__,,d8P`  "888,,____,dP
- "Y8P"         `Y8    88        `Y8   `"Y8888P"`    a8P"Y88888P" 
+"Y8P"         `Y8    88        `Y8   `"Y8888P"`    a8P"Y88888P"' "$CURRENT_VER" '
 
                  Automatic Notes Organiser Script
 
@@ -33,6 +27,23 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 CURRENT_VER="1.2"
 
 printHeader
+
+if [[ ! -d "$MATIERES_FOLDER" || ! -d "$DATES_FOLDER" || ! -d "$TEMPLATE_FOLDER" || -f "ANOS.conf" ]]; then
+  echo "Des répertoires sont manquant. Création.."
+  mkdir -p $MATIERES_FOLDER $DATES_FOLDER $TEMPLATE_FOLDER
+  {
+    printf '
+ICAL_FILE_URL="" # Lien pour télécharger le fichier .ical\n
+MATIERES_FOLDER="Matieres"\n
+TEMPLATE_FOLDER="Template"\n
+DATES_FOLDER="Dates"\n
+CHECK_UPDATES=0'
+  } >>"ANOS.conf"
+  echo "Veuillez relancer le programme"
+  exit 1
+fi
+
+source "ANOS.conf"
 
 if [[ "$CHECK_UPDATES" == 1 ]]; then
   LAST_VER=$(curl -s "https://api.github.com/repos/nijigokoro/AutoNotesOrganiserScript/releases/latest" | grep "tag_name" | cut -d'"' -f 4)
@@ -51,12 +62,6 @@ if [[ "$CHECK_UPDATES" == 1 ]]; then
   fi
 fi
 
-if [[ ! -d "$MATIERES_FOLDER" || ! -d "$DATES_FOLDER" || ! -d "$TEMPLATE_FOLDER" ]]; then
-  echo "Des répertoires sont manquant. Création.."
-  mkdir -p $MATIERES_FOLDER $DATES_FOLDER $TEMPLATE_FOLDER
-  echo "Veuillez relancer le programme"
-  exit 1
-fi
 cd "$MATIERES_FOLDER" || exit 1
 mkdir -p "SansMatiere"
 MATIERES_ARRAY=(*/)
@@ -78,7 +83,7 @@ DATE_STRING=${DATE_STRING%?}
 DATE_STRING=${DATE_STRING^}
 
 echo "Téléchargement de l'EDT.."
-wget ${ICAL_FILE_URL} -q -O "$TEMP_DIR/export.ical"
+wget "${ICAL_FILE_URL}" -q -O "$TEMP_DIR/export.ical"
 
 echo "Nous sommes le ${DATE_STRING}. Recherche d'évenements"
 echo
@@ -100,9 +105,9 @@ handle_event() {
   echo
 
   PS3="De quelle matière est ce cours? "
-  NO_MATIERE_TEXT="Pas de matière"
+  NO_MATIERE_TEXT="Ne pas créer de notes pour ce cours"
 
-  select matiere in "${MATIERES_ARRAY[@]}" "$NO_MATIERE_TEXT"; do
+  select matiere in "$NO_MATIERE_TEXT" "${MATIERES_ARRAY[@]}"; do
     if [[ "$matiere" == "$NO_MATIERE_TEXT" ]]; then
       printHeader
       break
