@@ -28,22 +28,49 @@ CURRENT_VER="1.2"
 
 printHeader
 
-if [[ ! -d "$MATIERES_FOLDER" || ! -d "$DATES_FOLDER" || ! -d "$TEMPLATE_FOLDER" || -f "ANOS.conf" ]]; then
-  echo "Des répertoires sont manquant. Création.."
-  mkdir -p $MATIERES_FOLDER $DATES_FOLDER $TEMPLATE_FOLDER
+if [[ ! -e "ANOS.conf" ]]; then
+  ICAL_FILE_URL=""
+  MATIERES_FOLDER=""
+  DATES_FOLDER=""
+  echo "Fichier de configuration non trouvé.."
+  echo
+  while [[ ! $ICAL_FILE_URL || $ICAL_FILE_URL == "" ]]; do
+    read -r -p "URL de votre calendrier > " ICAL_FILE_URL
+  done
+
+  read -r -p "Nom du dossier où les matières seront stoquées (Matieres) >" MATIERES_FOLDER
+  if [[ ! $MATIERES_FOLDER || $MATIERES_FOLDER == "" ]]; then
+    MATIERES_FOLDER="Matieres"
+  fi
+
+  read -r -p "Nom du dossier où les dates seront stoquées (Dates) >" DATES_FOLDER
+  if [[ ! $DATES_FOLDER || $DATES_FOLDER == "" ]]; then
+    DATES_FOLDER="Dates"
+  fi
+
+  read -r -p "Nom du dossier où votre template est stoqué (Template) >" TEMPLATE_FOLDER
+  if [[ ! $TEMPLATE_FOLDER || $TEMPLATE_FOLDER == "" ]]; then
+    TEMPLATE_FOLDER="Template"
+  fi
+
   {
-    printf '
-ICAL_FILE_URL="" # Lien pour télécharger le fichier .ical\n
-MATIERES_FOLDER="Matieres"\n
-TEMPLATE_FOLDER="Template"\n
-DATES_FOLDER="Dates"\n
-CHECK_UPDATES=0'
+    printf "ICAL_FILE_URL=%s\n" "$ICAL_FILE_URL"
+    printf "MATIERES_FOLDER=%s\n" "$MATIERES_FOLDER"
+    printf "DATES_FOLDER=%s\n" "$DATES_FOLDER"
+    printf "TEMPLATE_FOLDER=%s\n" "$TEMPLATE_FOLDER"
+    printf "CHECK_UPDATES=1"
   } >>"ANOS.conf"
-  echo "Veuillez relancer le programme"
-  exit 1
+  echo "Configuration terminée."
 fi
 
 source "ANOS.conf"
+
+if [[ ! -d "$MATIERES_FOLDER" || ! -d "$DATES_FOLDER" || ! -d "$TEMPLATE_FOLDER" ]]; then
+  echo "Des répertoires sont manquant. Création.."
+  mkdir -p "$MATIERES_FOLDER" "$DATES_FOLDER" "$TEMPLATE_FOLDER"
+  echo "Les répertoires ont été créés. Merci de créer un dossier par matière (Maths, Chimie par exemple) dans le dossier $MATIERES_FOLDER/"
+  exit 0
+fi
 
 if [[ "$CHECK_UPDATES" == 1 ]]; then
   LAST_VER=$(curl -s "https://api.github.com/repos/nijigokoro/AutoNotesOrganiserScript/releases/latest" | grep "tag_name" | cut -d'"' -f 4)
@@ -52,8 +79,8 @@ if [[ "$CHECK_UPDATES" == 1 ]]; then
     echo "Une mise à jour est disponible. Voulez vous la télécharger?"
     printf "[y/N] > "
     read -r -N 1 READ
+    echo
     if [[ "$READ" == "y" ]]; then
-      echo
       echo "Téléchargement..."
       wget "https://github.com/Nijigokoro/AutoNotesOrganiserScript/releases/download/${LAST_VER}/ANOS.sh" -O "ANOS.sh"
       echo "Téléchargement terminé. Veuillez relancer le programme"
